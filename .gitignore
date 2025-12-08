@@ -1,0 +1,23 @@
+# 1. NODE MODULES (Ignored globally)
+node_modules/
+
+# 2. ENVIRONMENT VARIABLES (CRITICAL FOR SECURITY)
+.env
+client/.env
+server/.env
+
+# 3. BUILD ARTIFACTS
+client/build/
+client/dist/
+
+# Backend compiled output
+server/dist/
+
+# 4. OS & MISCELLANEOUS FILES
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+*.lock
