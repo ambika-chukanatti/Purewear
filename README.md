@@ -78,5 +78,5 @@ Deploy the server folder in render.com
 
 ## Licenses
 
-[![Apache-2.0 License](https://img.shields.io/badge/License-Apache--2.0-orange.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
