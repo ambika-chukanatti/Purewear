@@ -15,8 +15,9 @@ const app = express();
 
 app.use(cors({
     origin:'https://purewear.vercel.app',
+    credentials: true,
     methods: ['GET', 'POST', 'DELETE','PUT'],
-    credentials: true
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -29,7 +30,7 @@ const startserver = async() => {
     try{
         connectDB();
         app.listen(PORT, ()=>{
-            console.log(`Server is running on http://localhost:${PORT}`);
+            console.log(`Server is running on https://purewear.onrender.com/${PORT}`);
         });
     }catch(err){
         console.log(err)
