@@ -10,7 +10,7 @@ const LikedCard = ({product, removeFromWishlist}) => {
               <path d="M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z"></path>
             </svg>
           </span>
-           <Link to={`http://localhost:5173/product/${product._id}`}>
+           <Link to={`/product/${product._id}`}>
             <a class="flex h-[260px] overflow-hidden" href="#">
               <img class="top-0 right-0 h-full w-full object-cover" src={product && product.imageUrls[0]} alt="product image" />
             </a>

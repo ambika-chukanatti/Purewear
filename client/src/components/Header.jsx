@@ -11,7 +11,7 @@ const Header = ({ user, handleLogout }) => {
 
   const handleOnclicked = () => setClicked(prev => !prev);
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
-  const handleLogoClick = () => navigate('/');
+  const handleLogoClick = () => navigate('/dashboard');
 
   const handleClickOutside = useCallback((e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
