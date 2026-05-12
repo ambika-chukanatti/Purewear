@@ -22,9 +22,8 @@ const loginUser = async(req,res)=>{
             await user.save();
 
             res.cookie('access_token', token, {
-                domain: "purewear-client.vercel.app",
                 path: "/",
-                maxAge: 1000 * 63 * 10,
+                maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days — matches JWT expiresIn
                 httpOnly: true,
                 secure: true,
                 sameSite: 'None',
