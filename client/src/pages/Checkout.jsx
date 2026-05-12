@@ -144,7 +144,7 @@ const Checkout = () => {
           <Alerts key={i} i={i} alertOn={alert.alertOn} type={alert.type} message={alert.message} handleAlertCancel={handleAlertCancel} />
         ))}
       </div>
-      <div className='w-10/12 flex flex-col md:flex-row items-start justify-center'>
+      <div className='w-10/12 flex flex-col items-start justify-center'>
         {addresses && addresses.addressList && addresses.addressList.map((address, ai) => (
           <div key={ai} className=''>
             <div>
