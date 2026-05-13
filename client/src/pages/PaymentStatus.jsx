@@ -88,6 +88,7 @@ const PaymentStatus = () => {
         const res2 = await axios.post(`https://${server}/api/user/order/create`, checkoutData, { withCredentials: true });
         if (res2.data.success) {
           setOrder(res2.data.data);
+          await axios.post(`https://${server}/api/user/cart/clear`, {}, { withCredentials: true });
         }
         const res3 = await axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true });
         if (res3.data.success) {

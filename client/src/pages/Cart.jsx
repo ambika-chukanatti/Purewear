@@ -107,9 +107,8 @@ const Cart = () => {
     setLoading(true);
     try {
       const data = { cartItems: cart, totalAmount: total };
-      await axios.post(`https://${server}/api/user/checkout/create`, data, { withCredentials: true });
-      const res2 = await axios.post(`https://${server}/api/user/cart/clear`, {}, { withCredentials: true });
-      if (res2.data.success) {
+      const res1 = await axios.post(`https://${server}/api/user/checkout/create`, data, { withCredentials: true });
+      if (res1.data.success) {
         navigate('/cart/checkout');
       }
     } catch (err) {
