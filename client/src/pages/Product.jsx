@@ -227,7 +227,7 @@ const Product = () => {
                         <path d="M15 18l-6-6 6-6" />
                       </svg>
                     </div>
-                    <div className="w-full aspect-[3/4] bg-gray-100 overflow-hidden">
+                    <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden">
                       <img
                         className="w-full h-full object-cover object-top"
                         src={product?.imageUrls?.[imgIndex]}

@@ -45,8 +45,11 @@ const Checkout = () => {
       if (res2.data.success) {
         setCheckout(res2.data.data);
         const cartItems = res2.data.data.cartItems;
-        const productPromises = cartItems.map((item) =>
-          axios.get(`https://${server}/api/product/get/${item.pid}`).then(res => res.data.data)
+        const productPromises = cartItems.map((item) => 
+          axios.get(`https://${server}/api/product/get/${item.pid}`).then(res => {
+            console.log(res.data);
+            return res.data.data;
+          })
         );
         const productsData = await Promise.all(productPromises);
         setProducts(productsData);

@@ -20,9 +20,8 @@ const Card = ({ product, wishlist, addToWishlist, removeFromWishlist }) => {
 
   return (
     <div className="group my-2 flex w-[300px] flex-col border border-gray-100 bg-white shadow-md">
-      {/* Image container — fixed aspect ratio, all images fill uniformly */}
       <Link to={`/product/${product._id}`}>
-        <div className="w-full aspect-[3/4] overflow-hidden bg-gray-100">
+        <div className="w-full aspect-square overflow-hidden bg-gray-100">
           <img
             className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
             src={product.imageUrls[0]}
@@ -31,10 +30,10 @@ const Card = ({ product, wishlist, addToWishlist, removeFromWishlist }) => {
         </div>
       </Link>
       <div className="flex flex-col pb-2 px-4 pt-2">
-        <h5 className="tracking-tight text-slate-900 line-clamp-2 min-h-[48px]">
+        <h5 className="tracking-tight text-slate-900 line-clamp-1 text-sm">
           {product.name}
         </h5>
-        <div className="flex flex-row items-center justify-between mt-2">
+        <div className="flex flex-row items-center justify-between mt-1">
           <span className="font-bold text-slate-900">Rs. {product.price}</span>
           <button className="p-1">
             <svg
