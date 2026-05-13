@@ -144,19 +144,7 @@ const Checkout = () => {
           <Alerts key={i} i={i} alertOn={alert.alertOn} type={alert.type} message={alert.message} handleAlertCancel={handleAlertCancel} />
         ))}
       </div>
-      <div className='w-10/12 flex flex-col items-start justify-center'>
-        {addresses && addresses.addressList && addresses.addressList.map((address, ai) => (
-          <div key={ai} className=''>
-            <div>
-              <input type="radio" />
-            </div>
-            <div className='shadow border border-gray-300 px-4 py-2'>
-              <h4 className='font-medium pb-1'>{address.fname} {address.lname}</h4>
-              <p>{address.area1}<br />{address.area2}<br />{address.city} {address.state} - {address.pincode}</p>
-              <p className='text-xs text-gray-600 pt-1 mb-4'>Mobile No: {address.phone}</p>
-            </div>
-          </div>
-        ))}
+      <div className='w-10/12 flex flex-col md:flex-row items-start justify-center'>
         <div className='w-full border-r py-4 px-6'>
           <p className="text-xl font-medium mb-4 border-b py-2">Shipping Address</p>
           <div>
