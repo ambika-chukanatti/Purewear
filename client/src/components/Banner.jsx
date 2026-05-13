@@ -6,7 +6,7 @@ const Banner = () => {
         <div class="flex flex-col  bg-white sm:flex-row md:h-80">
           <div class="flex w-full flex-col p-4 sm:w-1/2 sm:p-8 lg:w-3/5">
             <h2 class="text-xl font-bold text-gray-900 md:text-2xl lg:text-4xl">Winter Collection</h2>
-            <p class="mt-2 text-lg">By Uniqlo</p>
+            <p class="mt-2 text-lg">By PureWear</p>
             <p class="mt-4 max-w-md text-gray-500">Browse through our winter collection sale starting now. Get 30% off on Outer Wears. Terms and Conditions Apply.</p>
             <a href="#" class="group sm:mt-10 my-4 flex w-44 cursor-pointer select-none items-center justify-center rounded-md bg-black px-6 py-2 text-white transition">
               <span class="group flex w-full items-center justify-center rounded py-1 text-center font-bold"> Shop now </span>

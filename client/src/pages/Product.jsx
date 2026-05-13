@@ -222,13 +222,19 @@ const Product = () => {
               <div className="lg:flex lg:items-start">
                 <div className="lg:order-2 lg:ml-5">
                   <div className="relative max-w-xl overflow-hidden">
-                    <div className='absolute top-1/2 left-2 cursor-pointer' onClick={handleRightClick}>
+                    <div className='absolute top-1/2 left-2 cursor-pointer z-10' onClick={handleRightClick}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M15 18l-6-6 6-6" />
                       </svg>
                     </div>
-                    <img className="h-full w-full max-w-full object-cover" src={product?.imageUrls?.[imgIndex]} alt="" />
-                    <div className='absolute top-1/2 right-2 cursor-pointer' onClick={handleLeftClick}>
+                    <div className="w-full aspect-[3/4] bg-gray-100 overflow-hidden">
+                      <img
+                        className="w-full h-full object-cover object-top"
+                        src={product?.imageUrls?.[imgIndex]}
+                        alt={product?.name || ''}
+                      />
+                    </div>
+                    <div className='absolute top-1/2 right-2 cursor-pointer z-10' onClick={handleLeftClick}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 18l6-6-6-6" />
                       </svg>

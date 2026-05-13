@@ -35,7 +35,7 @@ const Wishlist = () => {
 
       const wishlistIds = res1.data.data;
       const productPromises = wishlistIds.map((item) =>
-        axios.get(`https://${server}/api/product/get/${item}`).then(res => res.data.data)
+        axios.get(`https://${server}/api/product/get/${item?.pid || item?._id || item}`).then(res => res.data.data)
       );
       const productsData = await Promise.all(productPromises);
       setWishlist([...productsData].reverse());

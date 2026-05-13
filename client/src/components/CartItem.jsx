@@ -9,11 +9,6 @@ const CartItem = ({ ci, cartItem, productItem, handleQuantity, handleDeleteItem}
 
   return (
         <div class={`items-center relative group w-full py-3 flex flex-col md:flex-row border-b`}>
-          {/* <span className='absolute invisible top-3 right-2 group font-b text-xl cursor-pointer group-hover:visible' onClick={()=>handleDeleteItem(cartItem, productItem.price)}>
-            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="18" height="18" fill="#343a40" viewBox="0 0 50 50">
-              <path d="M 7.71875 6.28125 L 6.28125 7.71875 L 23.5625 25 L 6.28125 42.28125 L 7.71875 43.71875 L 25 26.4375 L 42.28125 43.71875 L 43.71875 42.28125 L 26.4375 25 L 43.71875 7.71875 L 42.28125 6.28125 L 25 23.5625 Z"></path>
-            </svg>
-          </span> */}
           <Link to={`/product/${cartItem.pid}`}>
             <img class="flex items-center justify-center my-1 mr-6 h-32 w-32 border object-cover object-center" src={productItem?.imageUrls[0]} alt="" />
           </Link>
