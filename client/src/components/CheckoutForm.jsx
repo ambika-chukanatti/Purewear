@@ -7,7 +7,6 @@ const CheckoutForm = ({user, checkout, updatePaymentMethod, handleAlert}) => {
   const stripe = useStripe()
   const elements = useElements()
   const navigate = useNavigate()
-  const server = 'purewear.onrender.com';
 
   const [isProcessing, setIsprocessing] = useState(false)
   const [message, setMessage] = useState(null)
@@ -23,7 +22,7 @@ const CheckoutForm = ({user, checkout, updatePaymentMethod, handleAlert}) => {
       const { err, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `https://${server}/cart/checkout/payment/status`,
+          return_url: 'https://purewear.vercel.app/cart/checkout/payment/status',
         },
       })
 
