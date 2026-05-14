@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { PaymentSkeleton } from '../components/SkeletonAnimations';
 
 const stripePromise = loadStripe("pk_test_51Q6TTCAOg9YpRsPQyX84dXHKVPrhmUTLpo2Zq39PrrzgIAbGF557FUKfzWSmpct5OuNRxBv0ZaCzuqvWD6AGkFnR00QAeYNpxB");
 
@@ -24,12 +25,14 @@ const appearance = {
 
 const Payment = () => {
   const [loading, setLoading] = useState(false);
+  const [setupDone, setSetupDone] = useState(false);
   const [user, setUser] = useState({});
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [clientSecret, setClientSecret] = useState('');
   const [checkout, setCheckout] = useState({});
   const [alerts, setAlerts] = useState([]);
+  const [updating, setUpdating] = useState(false);
 
   const navigate = useNavigate();
   const server = 'purewear.onrender.com';
@@ -46,7 +49,7 @@ const Payment = () => {
   };
 
   const setup = async () => {
-    setLoading(true);
+    setSetupDone(false);
     try {
       const res1 = await axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true });
       if (res1.data.success) {
@@ -82,7 +85,7 @@ const Payment = () => {
     } catch (err) {
       handleAuthError(err);
     } finally {
-      setLoading(false);
+      setSetupDone(true);
     }
   };
 
@@ -91,7 +94,7 @@ const Payment = () => {
   }, []);
 
   const updatePaymentMethod = async (paymentMethod) => {
-    setLoading(true);
+    setUpdating(true);
     try {
       const response = await axios.post(
         `https://${server}/api/user/checkout/update`,
@@ -102,7 +105,7 @@ const Payment = () => {
     } catch (err) {
       handleAuthError(err);
     } finally {
-      setLoading(false);
+      setUpdating(false);
     }
   };
 
@@ -140,56 +143,54 @@ const Payment = () => {
           <path d="M32 15H3.41l8.29-8.29-1.41-1.42-10 10a1 1 0 0 0 0 1.41l10 10 1.41-1.41L3.41 17H32z" data-name="4-Arrow Left" />
         </svg>
       </Link>
-      {loading && (
-        <div className='fixed z-50 top-1/2 left-1/2 flex justify-center items-center'>
-          <Loading />
-        </div>
-      )}
       <div className='w-full z-40 flex flex-col items-end fixed px-3 right-1 md:right-4 top-14'>
         {alerts.map((alert, i) => (
           <Alerts key={i} i={i} alertOn={alert.alertOn} type={alert.type} message={alert.message} handleAlertCancel={handleAlertCancel} />
         ))}
       </div>
-      <div className='w-11/12 flex flex-col md:flex-row items-start justify-center'>
-        {clientSecret && (
-          <Elements options={{ clientSecret, appearance, loader }} stripe={stripePromise}>
-            <CheckoutForm user={user} checkout={checkout} updatePaymentMethod={updatePaymentMethod} handleAlert={handleAlert} />
-          </Elements>
-        )}
-        <div className="w-full flex flex-col items-center md:items-start justify-center py-8 md:py-2">
-          <div className='w-full flex flex-col px-6 py-3'>
-            <p className="text-xl font-medium">Order Summary</p>
-            <div className='flex flex-col w-full pt-2 items-center justify-center'>
-              <div className="flex w-full flex-col justify-center border md:border-y md:border-x-0 sm:px-4">
-                {checkout && checkout.cartItems && checkout.cartItems.map((cartItem, ci) => (
-                  <div key={ci}>
-                    <CheckoutCard ci={ci} cartItem={cartItem} productItem={products[ci]} />
-                  </div>
-                ))}
+
+      {setupDone === false ? (<PaymentSkeleton />) : (
+        <div className='w-11/12 flex flex-col md:flex-row items-start justify-center'>
+          {clientSecret && (
+            <Elements options={{ clientSecret, appearance, loader }} stripe={stripePromise}>
+              <CheckoutForm user={user} checkout={checkout} updatePaymentMethod={updatePaymentMethod} handleAlert={handleAlert} />
+            </Elements>
+          )}
+          <div className="w-full flex flex-col items-center md:items-start justify-center py-8 md:py-2">
+            <div className='w-full flex flex-col px-6 py-3'>
+              <p className="text-xl font-medium">Order Summary</p>
+              <div className='flex flex-col w-full pt-2 items-center justify-center'>
+                <div className="flex w-full flex-col justify-center border md:border-y md:border-x-0 sm:px-4">
+                  {checkout?.cartItems?.map((cartItem, ci) => (
+                    <div key={ci}>
+                      <CheckoutCard ci={ci} cartItem={cartItem} productItem={products[ci]} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-          <div className='w-full mt-4 md:mt-0 px-6 border md:border-none'>
-            <table className='w-full ml-4'>
-              <tbody>
-                <tr>
-                  <td className='w-9/12'>SubTotal:</td>
-                  <td className='w-3/12'>${total}</td>
-                </tr>
-                <tr>
-                  <td className='w-9/12'>Delivery Charge:</td>
-                  <td className='w-3/12'>$30</td>
-                </tr>
-                <tr>
-                  <td className='w-9/12 font-medium pt-3'>Total:</td>
-                  <td className='w-3/12 font-medium pt-3'>${total + 30}</td>
-                </tr>
-              </tbody>
-            </table>
-            <span className='px-5 text-sm italic text-gray-400'>(Inclusive of tax $0.00)</span>
+            <div className='w-full mt-4 md:mt-0 px-6 border md:border-none'>
+              <table className='w-full ml-4'>
+                <tbody>
+                  <tr>
+                    <td className='w-9/12'>SubTotal:</td>
+                    <td className='w-3/12'>Rs. {total}</td>
+                  </tr>
+                  <tr>
+                    <td className='w-9/12'>Delivery Charge:</td>
+                    <td className='w-3/12'>Rs. 30</td>
+                  </tr>
+                  <tr>
+                    <td className='w-9/12 font-medium pt-3'>Total:</td>
+                    <td className='w-3/12 font-medium pt-3'>Rs. {total + 30}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <span className='px-5 text-sm italic text-gray-400'>(Inclusive of tax $0.00)</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <Footer />
     </div>
   );

@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Header, Footer, EditAddress, EditProfile, Alerts, Loading } from '../components';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { ProfileSkeleton } from '../components/SkeletonAnimations';
 
 const Profile = () => {
   const [loading, setLoading] = useState(false);
+  const [setupDone, setSetupDone] = useState(false);
   const [user, setUser] = useState({});
   const [addresses, setAddresses] = useState({});
   const [isProfile, setIsProfile] = useState(true);
@@ -18,16 +20,14 @@ const Profile = () => {
   };
 
   const handleAuthError = (err) => {
-    if (err.response?.status === 401) {
-      navigate('/');
-    }
+    if (err.response?.status === 401) navigate('/');
     addAlert('error', err.message);
   };
 
   const handleIsProfile = () => setIsProfile(prev => !prev);
 
   const setup = async () => {
-    setLoading(true);
+    setSetupDone(false);
     try {
       const res1 = await axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true });
       const res2 = await axios.post(`https://${server}/api/user/address/get`, {}, { withCredentials: true });
@@ -36,7 +36,7 @@ const Profile = () => {
     } catch (err) {
       handleAuthError(err);
     } finally {
-      setLoading(false);
+      setSetupDone(true);
     }
   };
 
@@ -49,12 +49,7 @@ const Profile = () => {
     try {
       const response = await axios.post(
         `https://${server}/api/user/profile/update`,
-        {
-          fname: userData.fname,
-          lname: userData.lname,
-          phone: userData.phone,
-          email: userData.email
-        },
+        { fname: userData.fname, lname: userData.lname, phone: userData.phone, email: userData.email },
         { withCredentials: true }
       );
       if (response.status === 200) {
@@ -126,20 +121,14 @@ const Profile = () => {
   };
 
   const handleAlertCancel = (i) => {
-    setAlerts(prev => {
-      const updated = [...prev];
-      updated.splice(i, 1);
-      return updated;
-    });
+    setAlerts(prev => { const updated = [...prev]; updated.splice(i, 1); return updated; });
   };
 
   const handleLogout = async () => {
     setLoading(true);
     try {
       const response = await axios.post(`https://${server}/api/auth/logout`, {}, { withCredentials: true });
-      if (response.data.success) {
-        navigate('/');
-      }
+      if (response.data.success) navigate('/');
     } catch (err) {
       handleAuthError(err);
     } finally {
@@ -165,27 +154,30 @@ const Profile = () => {
           <Alerts key={i} i={i} alertOn={alert.alertOn} type={alert.type} message={alert.message} handleAlertCancel={handleAlertCancel} />
         ))}
       </div>
-      <div className='w-11/12 flex md:flex-row flex-col items-start justify-center pt-8'>
-        <div className='md:w-1/4 w-full border border-gray-400 flex md:flex-col flex-row items-center justify-start'>
-          <h2 className='md:block hidden font-bold text-lg py-2'>Account</h2>
-          <div className='py-2 border w-full flex flex-row items-center justify-center md:mx-0 mx-4'>
-            <img src="https://as1.ftcdn.net/v2/jpg/03/53/11/00/1000_F_353110097_nbpmfn9iHlxef4EDIhXB1tdTD0lcWhG9.jpg" alt="profile" className='rounded-full w-8 h-8 object-cover mx-2' />
-            <h1>{user?.fname} {user?.lname}</h1>
+
+      {setupDone === false ? <ProfileSkeleton /> : (
+        <div className='w-11/12 flex md:flex-row flex-col items-start justify-center pt-8'>
+          <div className='md:w-1/4 w-full border border-gray-400 flex md:flex-col flex-row items-center justify-start'>
+            <h2 className='md:block hidden font-bold text-lg py-2'>Account</h2>
+            <div className='py-2 border w-full flex flex-row items-center justify-center md:mx-0 mx-4'>
+              <img src="https://as1.ftcdn.net/v2/jpg/03/53/11/00/1000_F_353110097_nbpmfn9iHlxef4EDIhXB1tdTD0lcWhG9.jpg" alt="profile" className='rounded-full w-8 h-8 object-cover mx-2' />
+              <h1>{user?.fname} {user?.lname}</h1>
+            </div>
+            <div className='flex flex-col w-full items-center justify-start md:h-[64vh] md:pt-4 pt-2'>
+              <div className={`py-1 cursor-pointer ${isProfile ? 'font-bold' : ''}`} onClick={handleIsProfile}>Profile</div>
+              <div className={`py-1 cursor-pointer ${isProfile ? '' : 'font-bold'}`} onClick={handleIsProfile}>Addresses</div>
+            </div>
           </div>
-          <div className='flex flex-col w-full items-center justify-start md:h-[64vh] md:pt-4 pt-2'>
-            <div className={`py-1 cursor-pointer ${isProfile ? 'font-bold' : ''}`} onClick={handleIsProfile}>Profile</div>
-            <div className={`py-1 cursor-pointer ${isProfile ? '' : 'font-bold'}`} onClick={handleIsProfile}>Addresses</div>
+          <div className='md:w-3/4 w-full flex items-center justify-center'>
+            <div className='w-full'>
+              {isProfile
+                ? <EditProfile user={user} updateUserProfile={updateUserProfile} />
+                : <EditAddress userAddress={addresses} addAddress={addAddress} editAddress={editAddress} removeAddress={removeAddress} />
+              }
+            </div>
           </div>
         </div>
-        <div className='md:w-3/4 w-full flex items-center justify-center'>
-          <div className='w-full'>
-            {isProfile
-              ? <EditProfile user={user} updateUserProfile={updateUserProfile} />
-              : <EditAddress userAddress={addresses} addAddress={addAddress} editAddress={editAddress} removeAddress={removeAddress} />
-            }
-          </div>
-        </div>
-      </div>
+      )}
       <Footer />
     </div>
   );

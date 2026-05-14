@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Header, Footer, OrderCard, Alerts, Loading } from '../components';
+import { Header, Footer, OrderCard, Alerts } from '../components';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { OrdersSkeleton } from '../components/SkeletonAnimations';
 
 const Orders = () => {
   const [loading, setLoading] = useState(false);
+  const [setupDone, setSetupDone] = useState(false);
   const [user, setUser] = useState({});
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
@@ -18,38 +20,38 @@ const Orders = () => {
   };
 
   const handleAuthError = (err) => {
-    if (err.response?.status === 401) {
-      navigate('/');
-    }
+    if (err.response?.status === 401) navigate('/');
     addAlert('error', err.message);
   };
 
   const setup = async () => {
-    setLoading(true);
+    setSetupDone(false);
     try {
-      const res1 = await axios.post(`https://${server}/api/user/orders/get`, {}, { withCredentials: true });
-      const res2 = await axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true });
+      const [ordersRes, profileRes] = await Promise.all([
+        axios.post(`https://${server}/api/user/orders/get`, {}, { withCredentials: true }),
+        axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true }),
+      ]);
 
-      const orderItems = [...res1.data.orders].reverse();
+      if (profileRes.data.success) setUser(profileRes.data.data);
+
+      const orderItems = [...ordersRes.data.orders].reverse();
       setOrders(orderItems);
 
-      const productPromises = orderItems.map((item) => {
-        const subItemPromises = item.cartItems.map((subItem) =>
-          axios.get(`https://${server}/api/product/get/${subItem.pid}`).then(res => res.data.data)
-        );
-        return Promise.all(subItemPromises);
-      });
-
+      const productPromises = orderItems.map((item) =>
+        Promise.all(
+          item.cartItems.map((subItem) =>
+            axios.get(`https://${server}/api/product/get/${subItem.pid}`)
+              .then(res => res.data.data)
+              .catch(() => null)
+          )
+        )
+      );
       const productsData = await Promise.all(productPromises);
       setProducts(productsData);
-
-      if (res2.data.success) {
-        setUser(res2.data.data);
-      }
     } catch (err) {
       handleAuthError(err);
     } finally {
-      setLoading(false);
+      setSetupDone(true);
     }
   };
 
@@ -58,35 +60,24 @@ const Orders = () => {
   }, []);
 
   const handleAlertCancel = (i) => {
-    setAlerts(prev => {
-      const updated = [...prev];
-      updated.splice(i, 1);
-      return updated;
-    });
+    setAlerts(prev => { const updated = [...prev]; updated.splice(i, 1); return updated; });
   };
 
   const handleLogout = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`https://${server}/api/auth/logout`, {}, { withCredentials: true });
-      if (response.data.success) {
-        navigate('/');
-      }
-    } catch (err) {
-      handleAuthError(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true); 
+  try {
+    const response = await axios.post(`https://${server}/api/auth/logout`, {}, { withCredentials: true });
+    if (response.data.success) navigate('/');
+  } catch (err) {
+    handleAuthError(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className='relative w-full flex flex-col items-center'>
       <Header user={user} handleLogout={handleLogout} />
-      {loading && (
-        <div className='fixed z-50 top-1/2 left-1/2 flex justify-center items-center'>
-          <Loading />
-        </div>
-      )}
       <div className='w-full z-40 flex flex-col items-end fixed px-3 right-1 md:right-4 top-14'>
         {alerts.map((alert, i) => (
           <Alerts key={i} i={i} alertOn={alert.alertOn} type={alert.type} message={alert.message} handleAlertCancel={handleAlertCancel} />
@@ -99,19 +90,21 @@ const Orders = () => {
           </svg>
         </Link>
         <p className="flex mt-2 w-full justify-start pl-8 text-xl font-bold">All Orders</p>
-        <div className='flex flex-col w-full items-center justify-center mt-8'>
-          {orders && orders.length > 0 ? (
-            <div className='flex flex-col w-full items-center justify-center'>
-              {orders.map((order, oi) => (
-                <div key={oi} className='w-full flex justify-center gap-y-2 items-center px-8'>
-                  <OrderCard order={order} product={products[oi]} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='py-36 text-l'>No Orders Placed</div>
-          )}
-        </div>
+        {setupDone === false ? <OrdersSkeleton /> : (
+          <div className='flex flex-col w-full items-center justify-center mt-8'>
+            {orders.length > 0 ? (
+              <div className='flex flex-col w-full items-center justify-center'>
+                {orders.map((order, oi) => (
+                  <div key={oi} className='w-full flex justify-center gap-y-2 items-center px-8'>
+                    <OrderCard order={order} product={products[oi]} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className='py-36 text-l'>No Orders Placed</div>
+            )}
+          </div>
+        )}
       </div>
       <Footer />
     </div>

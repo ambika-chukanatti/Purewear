@@ -10,7 +10,7 @@ const CartItem = ({ ci, cartItem, productItem, handleQuantity, handleDeleteItem}
   return (
         <div class={`items-center relative group w-full py-3 flex flex-col md:flex-row border-b`}>
           <Link to={`/product/${cartItem.pid}`}>
-            <img class="flex items-center justify-center my-1 mr-6 h-32 w-32 border object-cover object-center" src={productItem?.imageUrls[0]} alt="" />
+            <img class="flex items-center justify-center my-1 mr-6 h-32 w-32 border object-cover object-top" src={productItem?.imageUrls[0]} alt="" />
           </Link>
           <div class="flex w-full flex-col justify-center items-center md:items-start px-4">
             <span class="font-semibold">{productItem?.name}</span>

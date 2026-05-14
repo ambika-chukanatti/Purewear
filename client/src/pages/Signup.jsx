@@ -67,7 +67,7 @@ const Signup = () => {
         PUREWEAR
       </div>
       <div className='w-full h-full'>
-        <img src={img2} className='w-full h-full object-cover inset-0' />
+        <img src={img2} className='w-full h-full object-cover inset-0' alt='' />
       </div>
       <div className='w-full flex flex-col items-center justify-center py-28 md:py-0'>
         <div className='w-9/12 mb-4'>
@@ -92,7 +92,7 @@ const Signup = () => {
           <button className='bg-black text-white py-2 rounded-lg my-2' onClick={handleSignup}>Signup</button>
         </div>
         <div className='w-9/12 mt-2 flex flex-row justify-between'>
-          <Link to="/login">Already have an account? Login</Link>
+          <Link to="/">Already have an account? Login</Link>
         </div>
       </div>
     </div>

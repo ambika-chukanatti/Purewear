@@ -19,9 +19,9 @@ const Card = ({ product, wishlist, addToWishlist, removeFromWishlist }) => {
   };
 
   return (
-    <div className="group my-2 flex w-[300px] flex-col border border-gray-100 bg-white shadow-md">
+    <div className="group my-2 flex w-[320px] flex-col border border-gray-100 bg-white shadow-md">
       <Link to={`/product/${product._id}`}>
-        <div className="w-full aspect-square overflow-hidden bg-gray-100">
+        <div className="w-full aspect-[11/12] overflow-hidden bg-white">
           <img
             className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
             src={product.imageUrls[0]}

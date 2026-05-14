@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Loading, Card, Banner, Header, Footer, Alerts } from '../components';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Card, Banner, Header, Footer, Alerts } from '../components';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { CardSkeleton } from '../components/SkeletonAnimations';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
+  const [setupDone, setSetupDone] = useState(false);
   const [user, setUser] = useState({});
   const [products, setProducts] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -25,9 +27,7 @@ const Dashboard = () => {
   };
 
   const handleAuthError = (err) => {
-    if (err.response?.status === 401) {
-      navigate('/');
-    }
+    if (err.response?.status === 401) navigate('/');
     addAlert('error', err.message);
   };
 
@@ -47,76 +47,48 @@ const Dashboard = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [searchOn, filterOn, handleClickOutside]);
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`https://${server}/api/product/get/all`);
-      setProducts(response.data.data);
-    } catch (err) {
-      addAlert('error', err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchUserData = async () => {
-    setLoading(true);
-    try {
-      const res1 = await axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true });
-      const res2 = await axios.post(`https://${server}/api/user/wishlist/get`, {}, { withCredentials: true });
-      if (res1.data.success) {
-        setUser(res1.data.data);
-      }
-      if (res2.data.success) {
-        setWishlist(res2.data.data);
-      }
-    } catch (err) {
-      handleAuthError(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchProducts();
-    fetchUserData();
+    const loadAll = async () => {
+      setSetupDone(false); // show skeleton
+      try {
+        const [productsRes, profileRes, wishlistRes] = await Promise.all([
+          axios.get(`https://${server}/api/product/get/all`),
+          axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true }),
+          axios.post(`https://${server}/api/user/wishlist/get`, {}, { withCredentials: true }),
+        ]);
+        setProducts(productsRes.data.data);
+        if (profileRes.data.success) setUser(profileRes.data.data);
+        if (wishlistRes.data.success) setWishlist(wishlistRes.data.data);
+      } catch (err) {
+        handleAuthError(err);
+      } finally {
+        setSetupDone(true); // hide skeleton
+      }
+    };
+    loadAll();
   }, []);
 
   const addToWishlist = async (pid) => {
-    setLoading(true);
     try {
-      const response = await axios.post(
-        `https://${server}/api/user/wishlist/add`,
-        { pid },
-        { withCredentials: true }
-      );
+      const response = await axios.post(`https://${server}/api/user/wishlist/add`, { pid }, { withCredentials: true });
       if (response.data.success) {
         setWishlist(prev => [...prev, pid]);
         addAlert('success', 'Added to wishlist');
       }
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   const removeFromWishlist = async (pid) => {
-    setLoading(true);
     try {
-      const response = await axios.post(
-        `https://${server}/api/user/wishlist/remove`,
-        { pid },
-        { withCredentials: true }
-      );
+      const response = await axios.post(`https://${server}/api/user/wishlist/remove`, { pid }, { withCredentials: true });
       if (response.data.success) {
         setWishlist(prev => prev.filter(item => item !== pid));
         addAlert('success', 'Removed from wishlist');
       }
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -124,9 +96,7 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const response = await axios.post(`https://${server}/api/auth/logout`, {}, { withCredentials: true });
-      if (response.data.success) {
-        navigate('/');
-      }
+      if (response.data.success) navigate('/');
     } catch (err) {
       handleAuthError(err);
     } finally {
@@ -138,73 +108,44 @@ const Dashboard = () => {
   const handleFilterOn = () => setFilterOn(prev => !prev);
 
   const handleFilterChange = (e) => {
-    const raw = e.target.value;
-    const val = raw.charAt(0).toUpperCase() + raw.slice(1);
-    setFilters(prev =>
-      prev.includes(val) ? prev.filter(el => el !== val) : [...prev, val]
-    );
+    const val = e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1);
+    setFilters(prev => prev.includes(val) ? prev.filter(el => el !== val) : [...prev, val]);
   };
 
   const handleApplyFilters = () => {
-    const filtProducts = products.filter(product =>
-      filters.some(e => product.attributes.includes(e))
-    );
-    setFilteredProducts(filtProducts);
+    setFilteredProducts(products.filter(product => filters.some(e => product.attributes.includes(e))));
     setFiltered(true);
     setFilterOn(false);
   };
 
   const handleSearch = () => {
-    const keywords = searchData
-      .split(/[\s,]+/)
-      .filter(Boolean)
-      .map(k => k.toLowerCase());
-
-    const filtProducts = products.filter(product =>
+    const keywords = searchData.split(/[\s,]+/).filter(Boolean).map(k => k.toLowerCase());
+    setFilteredProducts(products.filter(product =>
       keywords.every(keyword =>
         product.name.toLowerCase().includes(keyword) ||
         product.description.toLowerCase().includes(keyword) ||
         product.attributes.some(attr => attr.toLowerCase().includes(keyword))
       )
-    );
-    setFilteredProducts(filtProducts);
+    ));
     setFiltered(true);
     setSearchData('');
     setSearchOn(false);
   };
 
-  const handleSearchInput = (e) => {
-    setSearchData(e.target.value.toLowerCase());
-  };
-
-  const handleSearchEnter = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+  const handleSearchInput = (e) => setSearchData(e.target.value.toLowerCase());
+  const handleSearchEnter = (e) => { if (e.key === 'Enter') handleSearch(); };
 
   const handleAlertCancel = (i) => {
-    setAlerts(prev => {
-      const updated = [...prev];
-      updated.splice(i, 1);
-      return updated;
-    });
+    setAlerts(prev => { const updated = [...prev]; updated.splice(i, 1); return updated; });
   };
 
   useEffect(() => {
-    if (!filterOn) {
-      setFilters([]);
-    }
+    if (!filterOn) setFilters([]);
   }, [filterOn]);
 
   return (
     <div className='w-full flex flex-col items-center'>
       <Header user={user} handleLogout={handleLogout} />
-      {loading && (
-        <div className='fixed z-50 top-1/2 left-1/2 flex justify-center items-center'>
-          <Loading />
-        </div>
-      )}
       <Banner />
       <div className='w-full z-40 flex flex-col items-end fixed px-3 right-1 md:right-4 top-14'>
         {alerts.map((alert, i) => (
@@ -219,14 +160,8 @@ const Dashboard = () => {
         </div>
         <div className='w-full flex flex-row items-center justify-end'>
           {searchOn && (
-            <input
-              ref={modalRef}
-              type="text"
-              value={searchData}
-              onKeyDown={handleSearchEnter}
-              onChange={handleSearchInput}
-              className='w-72 border py-1 outline-none rounded-lg px-3 text-sm text-gray-600 mr-2 bg-white'
-            />
+            <input ref={modalRef} type="text" value={searchData} onKeyDown={handleSearchEnter} onChange={handleSearchInput}
+              className='w-72 border py-1 outline-none rounded-lg px-3 text-sm text-gray-600 mr-2 bg-white' />
           )}
           <svg className="flex fill-current hover:text-black mx-2 items-center cursor-pointer" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" onClick={handleSearchOn}>
             <path d="M10,18c1.846,0,3.543-0.635,4.897-1.688l4.396,4.396l1.414-1.414l-4.396-4.396C17.365,13.543,18,11.846,18,10 c0-4.411-3.589-8-8-8s-8,3.589-8,8S5.589,18,10,18z M10,4c3.309,0,6,2.691,6,6s-2.691,6-6,6s-6-2.691-6-6S6.691,4,10,4z" />
@@ -305,12 +240,19 @@ const Dashboard = () => {
         </div>
       </div>
       <div className='w-11/12 flex justify-center items-center'>
-        <div className='grid lg:grid-cols-3 lg:gap-y-8 lg:gap-x-24 md:grid-cols-2 md:gap-x-12 md:gap-y-8 grid-cols-1 gap-y-6 mt-4'>
-          {(!filtered ? products : filteredProducts).map((product, pi) => (
-            <div key={pi}>
-              <Card product={product} wishlist={wishlist} addToWishlist={addToWishlist} removeFromWishlist={removeFromWishlist} />
-            </div>
-          ))}
+        <div className='w-full grid lg:grid-cols-3 lg:gap-y-12 md:grid-cols-2 grid-cols-1 gap-y-8 gap-x-6 mt-4 justify-items-center'>
+          {setupDone === false
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="w-full">
+                  <CardSkeleton />
+                </div>
+              ))
+            : (!filtered ? products : filteredProducts).map((product, pi) => (
+                <div key={pi}>
+                  <Card product={product} wishlist={wishlist} addToWishlist={addToWishlist} removeFromWishlist={removeFromWishlist} />
+                </div>
+              ))
+          }
         </div>
       </div>
       <Footer />

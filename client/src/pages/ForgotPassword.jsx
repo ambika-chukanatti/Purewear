@@ -112,7 +112,7 @@ const ForgotPassword = () => {
         <img src={img3} className='w-full h-full object-cover inset-0' />
       </div>
       <div className='w-full flex flex-col items-center justify-center py-56 md:py-0'>
-        <Link className='w-3/5 mb-4 font-medium flex flex-row' to="/login">
+        <Link className='w-3/5 mb-4 font-medium flex flex-row' to="/">
           <span>
             <svg fill="#000000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" enableBackground="new 0 0 24 24">
               <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
@@ -128,7 +128,6 @@ const ForgotPassword = () => {
           <h2 className='font-bold text-xl'>Forgot Password</h2>
           <p className='text-gray-400 text-xs mt-1'>Enter your registered email address. We'll send you a code to reset your password.</p>
         </div>
-
         {stage === 'stage1' && (
           <div className='w-3/5 flex flex-col justify-center'>
             <label>Email Address:</label>

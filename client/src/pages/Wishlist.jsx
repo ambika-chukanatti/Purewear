@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Header, Footer, LikedCard, Alerts, Loading } from '../components';
+import { Header, Footer, LikedCard, Alerts } from '../components';
 import { Link, useNavigate } from 'react-router-dom';
+import { WishlistSkeleton } from '../components/SkeletonAnimations';
 
 const Wishlist = () => {
   const [loading, setLoading] = useState(false);
+  const [setupDone, setSetupDone] = useState(false);
   const [user, setUser] = useState({});
   const [wishlist, setWishlist] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -17,32 +19,32 @@ const Wishlist = () => {
   };
 
   const handleAuthError = (err) => {
-    if (err.response?.status === 401) {
-      navigate('/');
-    }
+    if (err.response?.status === 401) navigate('/');
     addAlert('error', err.message);
   };
 
   const setup = async () => {
-    setLoading(true);
+    setSetupDone(false);
     try {
-      const res1 = await axios.post(`https://${server}/api/user/wishlist/get`, {}, { withCredentials: true });
-      const res2 = await axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true });
+      const [wishlistRes, profileRes] = await Promise.all([
+        axios.post(`https://${server}/api/user/wishlist/get`, {}, { withCredentials: true }),
+        axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true }),
+      ]);
 
-      if (res2.data.success) {
-        setUser(res2.data.data);
-      }
+      if (profileRes.data.success) setUser(profileRes.data.data);
 
-      const wishlistIds = res1.data.data;
+      const wishlistIds = wishlistRes.data.data;
       const productPromises = wishlistIds.map((item) =>
-        axios.get(`https://${server}/api/product/get/${item?.pid || item?._id || item}`).then(res => res.data.data)
+        axios.get(`https://${server}/api/product/get/${item}`)
+          .then(res => res.data.data)
+          .catch(() => null)
       );
       const productsData = await Promise.all(productPromises);
-      setWishlist([...productsData].reverse());
+      setWishlist([...productsData].filter(Boolean).reverse());
     } catch (err) {
       handleAuthError(err);
     } finally {
-      setLoading(false);
+      setSetupDone(true);
     }
   };
 
@@ -51,7 +53,6 @@ const Wishlist = () => {
   }, []);
 
   const removeFromWishlist = async (pid) => {
-    setLoading(true);
     try {
       const response = await axios.post(
         `https://${server}/api/user/wishlist/remove`,
@@ -64,41 +65,25 @@ const Wishlist = () => {
       }
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleAlertCancel = (i) => {
-    setAlerts(prev => {
-      const updated = [...prev];
-      updated.splice(i, 1);
-      return updated;
-    });
+    setAlerts(prev => { const updated = [...prev]; updated.splice(i, 1); return updated; });
   };
 
   const handleLogout = async () => {
-    setLoading(true);
     try {
       const response = await axios.post(`https://${server}/api/auth/logout`, {}, { withCredentials: true });
-      if (response.data.success) {
-        navigate('/');
-      }
+      if (response.data.success) navigate('/');
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className='w-full flex flex-col items-center justify-center'>
       <Header user={user} handleLogout={handleLogout} />
-      {loading && (
-        <div className='fixed z-50 top-1/2 left-1/2 flex justify-center items-center'>
-          <Loading />
-        </div>
-      )}
       <div className='w-full z-40 flex flex-col items-end fixed px-3 right-1 md:right-4 top-14'>
         {alerts.map((alert, i) => (
           <Alerts key={i} i={i} alertOn={alert.alertOn} type={alert.type} message={alert.message} handleAlertCancel={handleAlertCancel} />
@@ -111,7 +96,9 @@ const Wishlist = () => {
           </svg>
         </Link>
         <p className="flex mt-2 w-full justify-start pl-8 text-xl font-bold">My Wishlist</p>
-        {wishlist.length > 0 ? (
+        {setupDone === false ? (
+          <WishlistSkeleton />
+        ) : wishlist.length > 0 ? (
           <div className='w-full flex justify-start items-center px-8'>
             <div className='grid lg:grid-cols-3 lg:gap-y-8 lg:gap-x-24 md:grid-cols-2 md:gap-x-12 md:gap-y-8 grid-cols-1 gap-y-6'>
               {wishlist.map((product) => (

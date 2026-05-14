@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
-import { Header, Footer, CartItem, Alerts, Loading } from '../components';
+import { Header, Footer, CartItem, Alerts } from '../components';
 import { useNavigate, Link } from 'react-router-dom';
+import { CartSkeleton } from '../components/SkeletonAnimations';
 
 const Cart = () => {
   const [loading, setLoading] = useState(false);
+  const [setupDone, setSetupDone] = useState(false);
   const [user, setUser] = useState({});
   const [total, setTotal] = useState(0);
   const [cart, setCart] = useState([]);
@@ -18,25 +20,22 @@ const Cart = () => {
   };
 
   const handleAuthError = (err) => {
-    if (err.response?.status === 401) {
-      navigate('/');
-    }
+    if (err.response?.status === 401) navigate('/');
     addAlert('error', err.message);
   };
 
   const setup = async () => {
-    setLoading(true);
+    setSetupDone(false);
     try {
-      const res2 = await axios.post(`https://${server}/api/user/cart/get`, {}, { withCredentials: true });
-      const cartItems = res2.data.data;
-      if (res2.data.success) {
-        setCart(cartItems);
-      }
+      const [cartRes, profileRes] = await Promise.all([
+        axios.post(`https://${server}/api/user/cart/get`, {}, { withCredentials: true }),
+        axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true }),
+      ]);
 
-      const res1 = await axios.post(`https://${server}/api/user/profile/get`, {}, { withCredentials: true });
-      if (res1.data.success) {
-        setUser(res1.data.data);
-      }
+      if (profileRes.data.success) setUser(profileRes.data.data);
+
+      const cartItems = cartRes.data.data;
+      if (cartRes.data.success) setCart(cartItems);
 
       const productPromises = cartItems.map((item) =>
         axios.get(`https://${server}/api/product/get/${item.pid}`).then(res => res.data.data)
@@ -52,7 +51,7 @@ const Cart = () => {
     } catch (err) {
       handleAuthError(err);
     } finally {
-      setLoading(false);
+      setSetupDone(true);
     }
   };
 
@@ -63,30 +62,28 @@ const Cart = () => {
   const handleQuantity = async (name, cartItem, price) => {
     const delta = name === 'plus' ? 1 : name === 'minus' ? -1 : 0;
     if (!delta) return;
-
-    setLoading(true);
     try {
-      const data = {
-        cid: cartItem._id,
-        quantity: cartItem.quantity + delta,
-      };
-      const res = await axios.post(`https://${server}/api/user/cart/update`, data, { withCredentials: true });
+      const res = await axios.post(
+        `https://${server}/api/user/cart/update`,
+        { cid: cartItem._id, quantity: cartItem.quantity + delta },
+        { withCredentials: true }
+      );
       if (res.data.success) {
         setCart(res.data.data);
         setTotal(prev => prev + delta * price);
       }
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleDeleteItem = async (cartItem, price) => {
-    setLoading(true);
     try {
-      const data = { cid: cartItem._id };
-      const res = await axios.post(`https://${server}/api/user/cart/remove`, data, { withCredentials: true });
+      const res = await axios.post(
+        `https://${server}/api/user/cart/remove`,
+        { cid: cartItem._id },
+        { withCredentials: true }
+      );
       if (res.status === 200) {
         setCart(res.data.data);
         setTotal(prev => prev - cartItem.quantity * price);
@@ -94,8 +91,6 @@ const Cart = () => {
       }
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -104,50 +99,34 @@ const Cart = () => {
       addAlert('error', 'There are no items in the cart');
       return;
     }
-    setLoading(true);
     try {
-      const data = { cartItems: cart, totalAmount: total };
-      const res1 = await axios.post(`https://${server}/api/user/checkout/create`, data, { withCredentials: true });
-      if (res1.data.success) {
-        navigate('/cart/checkout');
-      }
+      const res1 = await axios.post(
+        `https://${server}/api/user/checkout/create`,
+        { cartItems: cart, totalAmount: total },
+        { withCredentials: true }
+      );
+      if (res1.data.success) navigate('/cart/checkout');
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    setLoading(true);
     try {
       const response = await axios.post(`https://${server}/api/auth/logout`, {}, { withCredentials: true });
-      if (response.data.success) {
-        navigate('/');
-      }
+      if (response.data.success) navigate('/');
     } catch (err) {
       handleAuthError(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleAlertCancel = (i) => {
-    setAlerts(prev => {
-      const updated = [...prev];
-      updated.splice(i, 1);
-      return updated;
-    });
+    setAlerts(prev => { const updated = [...prev]; updated.splice(i, 1); return updated; });
   };
 
   return (
     <div className='w-full flex flex-col items-center'>
       <Header user={user} handleLogout={handleLogout} />
-      {loading && (
-        <div className='fixed z-50 top-1/2 left-1/2 flex justify-center items-center'>
-          <Loading />
-        </div>
-      )}
       <Link to='/dashboard' className='w-11/12 flex justify-start py-3'>
         <svg xmlns="http://www.w3.org/2000/svg" className='w-6 h-6 cursor-pointer' viewBox="0 0 32 32">
           <path d="M32 15H3.41l8.29-8.29-1.41-1.42-10 10a1 1 0 0 0 0 1.41l10 10 1.41-1.41L3.41 17H32z" data-name="4-Arrow Left" />
@@ -159,43 +138,45 @@ const Cart = () => {
         ))}
       </div>
       <div className='w-full flex items-center justify-center'>
-        <div className="w-10/12 flex flex-col md:flex-row items-center md:items-start justify-center py-2">
-          <div className='w-full md:w-2/3 flex flex-col px-6 py-3 border-r'>
-            <p className="text-xl font-medium pb-2 border-b">Products</p>
-            <div className='flex flex-col w-full items-center justify-center'>
-              {cart.length > 0 ? (
-                <div className="flex w-full flex-col justify-center border md:border-y-0 md:border-x-0 sm:px-4">
-                  {cart.map((cartItem, ci) => (
-                    <div key={ci}>
-                      <CartItem ci={ci} cartItem={cartItem} productItem={products[ci]} handleQuantity={handleQuantity} handleDeleteItem={handleDeleteItem} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className='py-36 text-gray-600'>Your cart is empty</div>
-              )}
+        {setupDone === false ? <CartSkeleton /> : (
+          <div className="w-10/12 flex flex-col md:flex-row items-center md:items-start justify-center py-2">
+            <div className='w-full md:w-2/3 flex flex-col px-6 py-3 border-r'>
+              <p className="text-xl font-medium pb-2 border-b">Products</p>
+              <div className='flex flex-col w-full items-center justify-center'>
+                {cart.length > 0 ? (
+                  <div className="flex w-full flex-col justify-center border md:border-y-0 md:border-x-0 sm:px-4">
+                    {cart.map((cartItem, ci) => (
+                      <div key={ci}>
+                        <CartItem ci={ci} cartItem={cartItem} productItem={products[ci]} handleQuantity={handleQuantity} handleDeleteItem={handleDeleteItem} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='py-36 text-gray-600'>Your cart is empty</div>
+                )}
+              </div>
+            </div>
+            <div className='w-11/12 md:w-1/3 mt-4 md:mt-0 py-2 px-6 border md:border-none'>
+              <p className="text-xl font-medium border-b pb-3">Order Summary</p>
+              <table className='w-full mt-4'>
+                <tbody>
+                  <tr>
+                    <td className='w-9/12'>SubTotal:</td>
+                    <td className='w-3/12'>Rs. {total}</td>
+                  </tr>
+                  <tr className='font-medium'>
+                    <td className='w-9/12'>Total:</td>
+                    <td className='w-3/12'>Rs. {total}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className='text-sm italic text-gray-400'>(Inclusive of tax $0.00)</p>
+              <div className='flex items-center justify-center w-full py-2 mt-6 bg-black font-medium text-white'>
+                <button onClick={handleCheckout}>Checkout</button>
+              </div>
             </div>
           </div>
-          <div className='w-11/12 md:w-1/3 mt-4 md:mt-0 py-2 px-6 border md:border-none'>
-            <p className="text-xl font-medium border-b pb-3">Order Summary</p>
-            <table className='w-full mt-4'>
-              <tbody>
-                <tr>
-                  <td className='w-9/12'>SubTotal:</td>
-                  <td className='w-3/12'>${total}</td>
-                </tr>
-                <tr className='font-medium'>
-                  <td className='w-9/12'>Total:</td>
-                  <td className='w-3/12'>${total}</td>
-                </tr>
-              </tbody>
-            </table>
-            <p className='text-sm italic text-gray-400'>(Inclusive of tax $0.00)</p>
-            <div className='flex items-center justify-center w-full py-2 mt-6 bg-black font-medium text-white'>
-              <button onClick={handleCheckout}>Checkout</button>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
       <Footer />
     </div>
