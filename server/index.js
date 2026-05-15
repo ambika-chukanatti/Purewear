@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 
 app.use(cors({
-    origin: ['https://purewear.vercel.app', 'http://localhost:5173'],
+    origin: ['https://purewear.vercel.app'],
     credentials: true,
     methods: ['GET', 'POST', 'DELETE','PUT'],
     allowedHeaders: ['Content-Type', 'Authorization']
